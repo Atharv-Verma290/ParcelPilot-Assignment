@@ -15,3 +15,6 @@ wheels/
 
 # ChromaDB
 data/chroma/
+
+# SQLite
+data/parcel_pilot.db
