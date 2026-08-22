@@ -4,7 +4,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 
 from .prompts import STRUCTURED_DATA_SYSTEM_PROMPT
-from .schema import StructuredDataState
+from .states import StructuredDataState
 from .tools import execute_sql
 
 load_dotenv()

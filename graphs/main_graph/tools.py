@@ -1,13 +1,15 @@
 import json
 from typing import Any, Dict, Literal, Optional
-from langchain.tools import tool 
+from langchain.tools import ToolRuntime, tool
+from streamlit.runtime.state.common import user_key_from_element_id 
 
 from .utils import search_docs
 from graphs.structured_data.graph import structured_data_graph
-from graphs.structured_data.schema import StructuredDataState
+from graphs.structured_data.states import StructuredDataState
+from auth.authorization import require_permission, Permission
 
 @tool
-def search_docs_tool(query: str) -> str:
+def search_docs_tool(query: str, runtime: ToolRuntime) -> str:
     """
     Search the Parcel Pilot documentation for information relevant
     to the user's question.
@@ -15,6 +17,12 @@ def search_docs_tool(query: str) -> str:
     Use this tool whenever the answer requires information from
     the internal documentation.
     """
+    role = runtime.state.get("role")
+
+    try:
+        require_permission(role, Permission.READ_DOCUMENTS)
+    except PermissionError as error:
+        return f"Access denied: {error}"
 
     results = search_docs(query, k=3)
 
@@ -47,7 +55,7 @@ def search_docs_tool(query: str) -> str:
 
 
 @tool 
-def query_structured_data(instruction: str) -> str:
+def query_structured_data(instruction: str, runtime: ToolRuntime) -> str:
     """
     Query ParcelPilot's structured operational database.
 
@@ -71,10 +79,14 @@ def query_structured_data(instruction: str) -> str:
 
     The tool is read-only and cannot modify the database.
     """
+    user_id = runtime.state.get("user_id")
+    role = runtime.state.get("role")
 
     initial_state: StructuredDataState = {
         "instruction": instruction,
         "messages": [],
+        "user_id": user_id,
+        "role": role,
     }
 
     result = structured_data_graph.invoke(initial_state)
@@ -93,6 +105,7 @@ def create_follow_up_task(
     description: str,
     priority: Literal["LOW", "MEDIUM", "HIGH", "URGENT"],
     assigned_team: str,
+    runtime: ToolRuntime,
     ticket_id: Optional[str] = None,
     order_id: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -102,6 +115,12 @@ def create_follow_up_task(
     This does NOT create the task in the database.
     The task must be approved by a human before execution.
     """
+    role = runtime.state.get("role")
+
+    try:
+        require_permission(role, Permission.CREATE_FOLLOW_UP_TASK)
+    except PermissionError as error:
+        return f"Access denied: {error}"
 
     return json.dumps({
         "title": title,

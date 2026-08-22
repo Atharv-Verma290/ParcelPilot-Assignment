@@ -1,13 +1,14 @@
 import json
 
-from langchain.tools import tool
+from langchain.tools import ToolRuntime, tool
 
+from auth.authorization import require_permission, Permission
 from data.database import execute_query, get_connection
-from .schema import StructuredDataState
+from .states import StructuredDataState
 
 
 @tool
-def execute_sql(sql: str) -> str:
+def execute_sql(sql: str, runtime: ToolRuntime) -> str:
     """
     Execute a read-only SQL query against the ParcelPilot
     structured data database.
@@ -17,11 +18,18 @@ def execute_sql(sql: str) -> str:
 
     The SQL query must be read-only.
     """
+    role = runtime.state.get("role") 
+
+    try:
+        require_permission(role, Permission.READ_OPERATIONAL_DATA)
+    except PermissionError as error:
+        return f"Access denied: {error}"
+        
 
     sql = sql.strip()
 
     normalized_sql = sql.lower() 
-    if not normalized_sql.startswith("select") or normalized_sql.startswith("with"):
+    if not (normalized_sql.startswith("select") or normalized_sql.startswith("with")):
         raise ValueError("Only SELECT or WITH ... SELECT queries are allowed.")
 
     connection = get_connection()

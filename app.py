@@ -11,6 +11,7 @@ from langgraph.types import Command
 
 from graphs.main_graph.graph import build_graph
 from graphs.main_graph.states import AgentState
+from auth.users import USERS
 
 
 st.set_page_config(
@@ -35,6 +36,9 @@ if "waiting_for_input" not in st.session_state:
 
 if "graph" not in st.session_state:
     st.session_state.graph = build_graph()
+
+if "selected_user" not in st.session_state:
+    st.session_state.selected_user = next(iter(USERS))
 
 
 # ---------------------------------------------------------
@@ -110,6 +114,7 @@ def sync_messages_from_graph(output) -> None:
 
 def process_graph_input(user_input: str):
     graph = st.session_state.graph
+    user = USERS[st.session_state.selected_user]
     config = get_graph_config()
 
     if st.session_state.waiting_for_input:
@@ -121,7 +126,9 @@ def process_graph_input(user_input: str):
         input_state: AgentState = {
             "messages": [
                 HumanMessage(content=user_input)
-            ]
+            ],
+            "user_id": user["user_id"],
+            "role": user["role"]
         }
         output = graph.invoke(input_state, config)
 
@@ -168,6 +175,18 @@ with st.sidebar:
     st.write(
         f"Messages: {len(st.session_state.messages)}"
     )
+
+    st.divider()
+
+    st.selectbox(
+        "Logged in as",
+        list(USERS.keys()),
+        key="selected_user",
+    )
+
+    user = USERS[st.session_state.selected_user]
+
+    st.write(f"Role: {user['role']}")
 
 
 # ---------------------------------------------------------

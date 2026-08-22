@@ -2,7 +2,7 @@ from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from .nodes import structured_data_agent
-from .schema import StructuredDataState
+from .states import StructuredDataState
 from .tools import execute_sql
 
 builder = StateGraph(StructuredDataState)

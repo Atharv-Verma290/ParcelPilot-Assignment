@@ -61,15 +61,25 @@ def agent_node(state: AgentState):
 def process_tool_result(state: AgentState):
     last_message = state.get("messages", [])[-1]
 
-    if last_message.name == "create_follow_up_task":
-        return {
-            "pending_action": {
-                "action": "create_follow_up_task",
-                "proposal": json.loads(last_message.content),
-            }
-        }
+    if last_message.name != "create_follow_up_task":
+        return {}
 
-    return {}
+    content = (last_message.content or "").strip()
+
+    if not content.startswith("{"):
+        return {}
+
+    try:
+        proposal = json.loads(content)
+    except json.JSONDecodeError:
+        return {}
+
+    return {
+        "pending_action": {
+            "action": "create_follow_up_task",
+            "proposal": proposal,
+        }
+    }
 
 
 def perform_action(state: AgentState):

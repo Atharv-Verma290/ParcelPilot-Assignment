@@ -3,3 +3,5 @@ from langgraph.graph import MessagesState
 
 class AgentState(MessagesState):
     pending_action: Dict[str, Any] 
+    user_id: str 
+    role: str
