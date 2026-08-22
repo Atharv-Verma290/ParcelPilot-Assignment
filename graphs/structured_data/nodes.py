@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 
 from .prompts import STRUCTURED_DATA_SYSTEM_PROMPT
 from .schema import StructuredDataState
@@ -8,7 +9,8 @@ from .tools import execute_sql
 
 load_dotenv()
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash").bind_tools([execute_sql])
+# llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash").bind_tools([execute_sql])
+llm = ChatOpenAI(model="gpt-5.6-luna", reasoning_effort="none").bind_tools([execute_sql])
 
 
 def structured_data_agent(state: StructuredDataState) -> dict:

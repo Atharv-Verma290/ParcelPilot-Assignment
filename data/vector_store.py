@@ -9,11 +9,17 @@ client = chromadb.PersistentClient(path="./data/chroma")
 #     model_name="all-MiniLM-L6-v2" 
 # )
 
-embedding_function = embedding_functions.GoogleGeminiEmbeddingFunction(
-    api_key_env_var="GOOGLE_API_KEY",
-    model_name="gemini-embedding-001",
-    task_type="RETRIEVAL_DOCUMENT",
-    dimension=768
+# embedding_function = embedding_functions.GoogleGeminiEmbeddingFunction(
+#     api_key_env_var="GOOGLE_API_KEY",
+#     model_name="gemini-embedding-001",
+#     task_type="RETRIEVAL_DOCUMENT",
+#     dimension=768
+# )
+
+embedding_function = embedding_functions.OpenAIEmbeddingFunction(
+    api_key_env_var="OPENAI_API_KEY",
+    model_name="text-embedding-3-small",
+    dimensions=768
 )
 
 collection = client.get_or_create_collection(

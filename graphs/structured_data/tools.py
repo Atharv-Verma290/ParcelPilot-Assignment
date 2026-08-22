@@ -2,7 +2,7 @@ import json
 
 from langchain.tools import tool
 
-from .database import execute_query, get_connection
+from data.database import execute_query, get_connection
 from .schema import StructuredDataState
 
 
