@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 DATASET_REFERENCE_TIME = datetime(2026, 8, 16, 11, 0, 0, tzinfo=ZoneInfo("Asia/Kolkata"))
 
 
-client = chromadb.PersistentClient(path="/data/chroma")
+client = chromadb.PersistentClient(path="./data/chroma")
 collection = client.get_collection(
     name="parcel_pilot_docs"
 )
