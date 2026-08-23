@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict, Literal, Optional
 from langchain.tools import ToolRuntime, tool
+from numpy import require
 from streamlit.runtime.state.common import user_key_from_element_id 
 
 from .utils import search_docs
@@ -132,4 +133,97 @@ def create_follow_up_task(
     })
 
 
-all_tools = [search_docs_tool, query_structured_data, create_follow_up_task]
+@tool 
+def create_staff(
+    name: str, 
+    role: Literal["ADMIN", "OPERATIONS", "SUPPORT"],
+    runtime: ToolRuntime,
+) -> Dict[str, Any]:
+    """
+    Propose creation of a new ParcelPilot staff member.
+
+    This does NOT modify the database.
+    The proposal must be explicitly approved by a human
+    before execution.
+    """
+    role_value = runtime.state.get("role")
+
+    try:
+        require_permission(role_value, Permission.MANAGE_STAFF) 
+    except PermissionError as error:
+        return f"Access denied: {error}"
+
+    return json.dumps({
+        "action": "create_staff",
+        "proposal": {
+            "name": name,
+            "role": role,
+        }
+    })
+
+@tool
+def update_staff(
+    user_id: str,
+    name: Optional[str],
+    role: Optional[Literal["SUPPORT", "OPERATIONS", "ADMIN"]],
+    runtime: ToolRuntime,
+) -> Dict[str, Any]:
+    """
+    Propose an update to an existing ParcelPilot staff member.
+
+    This does NOT modify the database.
+    The proposal must be explicitly approved by a human
+    before execution.
+    """
+
+    role_value = runtime.state.get("role")
+
+    try:
+        require_permission(
+            role_value,
+            Permission.MANAGE_STAFF,
+        )
+    except PermissionError as error:
+        return f"Access denied: {error}"
+
+    if name is None and role is None:
+        return "At least one field must be provided for update."
+
+    return json.dumps({
+        "action": "update_staff",
+        "proposal": {
+            "user_id": user_id,
+            "name": name,
+            "role": role,
+        },
+    })
+
+
+@tool
+def delete_staff(
+    user_id: str,
+    runtime: ToolRuntime,
+) -> Dict[str, Any]:
+    """
+    Propose deletion of an existing ParcelPilot staff member.
+
+    This does NOT modify the database.
+    The proposal must be explicitly approved by a human
+    before execution.
+    """
+    role = runtime.state.get("role")
+
+
+    try:
+        require_permission(role, Permission.MANAGE_STAFF)
+    except PermissionError as error:
+        return f"Access denied: {error}"
+
+    return json.dumps({
+        "action": "delete_staff",
+        "proposal": {
+            "user_id": user_id,
+        },
+    })
+
+all_tools = [search_docs_tool, query_structured_data, create_follow_up_task, create_staff, update_staff, delete_staff]
