@@ -9,6 +9,7 @@ class Permission(StrEnum):
     MANAGE_ACCESS = "manage_access"
     MANAGE_ROLES = "manage_roles"
 
+    READ_STAFF = "read_staff"
 
 class Role(StrEnum):
     SUPPORT = "SUPPORT"
@@ -34,6 +35,7 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.READ_OPERATIONAL_DATA,
         Permission.CREATE_FOLLOW_UP_TASK,
         Permission.MANAGE_STAFF,
+        Permission.READ_STAFF,
         Permission.MANAGE_ACCESS,
         Permission.MANAGE_ROLES,
     },
