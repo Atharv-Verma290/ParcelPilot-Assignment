@@ -203,7 +203,31 @@ flowchart TD
 
 
 
-## 4. Why the System Uses Multiple Agents
+## 4. Models Used
+
+The system uses OpenAI models for language reasoning and for document embeddings.
+
+### GPT-5.6 Luna (`gpt-5.6-luna`)
+
+GPT-5.6 Luna is the chat and tool-calling model for every LangGraph agent:
+
+- **Main support & operations agent** — interprets the request, chooses tools, investigates across sources, and presents findings for human approval
+- **Structured data subgraph** — turns a natural-language data request into one or more read-only SQL queries
+- **Action proposal subgraph** — maps operational intent onto a single validated action proposal
+
+All three call the model with `reasoning_effort="none"`.
+
+### text-embedding-3-small (`text-embedding-3-small`)
+
+`text-embedding-3-small` is the embedding model used by ChromaDB.
+
+It embeds ParcelPilot policies, SOPs, customer agreements, product documentation, and related documents so the document-search tool can retrieve them by semantic similarity.
+
+---
+
+
+
+## 5. Why the System Uses Multiple Agents
 
 A deliberate design decision was made to avoid building one large agent responsible for everything.
 
@@ -283,7 +307,7 @@ The proposal subgraph cannot modify the database.
 
 
 
-## 5. Action Proposal Architecture
+## 6. Action Proposal Architecture
 
 Instead of exposing every mutation tool directly to the main agent, the main agent only sees:
 
@@ -332,7 +356,7 @@ No database change has occurred at this stage.
 
 
 
-## 6. Human-in-the-Loop Actions
+## 7. Human-in-the-Loop Actions
 
 All state-changing operations require explicit human confirmation.
 
@@ -384,7 +408,7 @@ This satisfies the requirement that every mutation requires explicit confirmatio
 
 
 
-## 7. Access Control
+## 8. Access Control
 
 The chatbot is designed for internal ParcelPilot staff.
 
@@ -474,7 +498,7 @@ This prevents an authorised operations user from automatically gaining access to
 
 
 
-## 8. Authentication Context
+## 9. Authentication Context
 
 The Streamlit application injects authenticated user information directly into the LangGraph state.
 
@@ -498,7 +522,7 @@ This ensures authorization decisions are based on application-controlled state r
 
 
 
-## 9. Multi-Step Reasoning
+## 10. Multi-Step Reasoning
 
 A major design requirement was avoiding one giant tool call.
 
@@ -539,7 +563,7 @@ This improves:
 
 
 
-## 10. Source Authority
+## 11. Source Authority
 
 The supplied source pack intentionally contains imperfect information.
 
@@ -592,7 +616,7 @@ are taken from the database rather than documents or historical conversations.
 
 
 
-## 11. Database Safety
+## 12. Database Safety
 
 The structured-data agent can only execute read-only SQL.
 
@@ -625,7 +649,7 @@ This prevents the model from generating arbitrary database modifications.
 
 
 
-## 12. Action Execution Safety
+## 13. Action Execution Safety
 
 Proposal tools and execution functions are intentionally separated.
 
@@ -663,7 +687,7 @@ This architecture keeps LLM reasoning separate from database mutation.
 
 
 
-## 13. Application State
+## 14. Application State
 
 The main LangGraph state tracks information such as:
 
@@ -695,7 +719,7 @@ Action successfully executed
 
 
 
-## 14. Streamlit Interface
+## 15. Streamlit Interface
 
 The application exposes the system through a simple internal chat UI.
 
@@ -717,7 +741,7 @@ Tool calls and outputs are displayed in expandable sections, which makes it easi
 
 
 
-## 15. Example Workflow
+## 16. Example Workflow
 
 Consider:
 
@@ -773,7 +797,7 @@ This demonstrates a multi-source, multi-tool investigation rather than a simple 
 
 
 
-## 16. Technical Decisions
+## 17. Technical Decisions
 
 
 
@@ -839,7 +863,7 @@ without building a separate frontend/backend application.
 
 
 
-## 17. Project Structure
+## 18. Project Structure
 
 A simplified project structure:
 
@@ -887,7 +911,7 @@ The exact repository layout may differ slightly depending on how the project is 
 
 
 
-## 18. Running the Project
+## 19. Running the Project
 
 
 
@@ -978,7 +1002,7 @@ docker exec -it <container_id_or_name> /bin/bash
 
 
 
-## 19. Assignment Requirements Coverage
+## 20. Assignment Requirements Coverage
 
 
 | Requirement                       | Implementation                                           |
@@ -1001,7 +1025,7 @@ docker exec -it <container_id_or_name> /bin/bash
 
 
 
-## 20. Key Design Principles
+## 21. Key Design Principles
 
 
 
@@ -1045,7 +1069,7 @@ The main agent orchestrates specialised subgraphs instead of handling SQL, schem
 
 
 
-## 21. Limitations and Future Improvements
+## 22. Limitations and Future Improvements
 
 This implementation intentionally focuses on the assignment scope.
 
