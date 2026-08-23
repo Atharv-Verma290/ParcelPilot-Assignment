@@ -49,6 +49,27 @@ TABLE: orders
 - cancellation_requested_at (TIMESTAMP)
 - notes (TEXT)
 
+Allowed orders.status values:
+- open
+- confirmed
+- picked_up
+- in_transit
+- delivered
+- cancelled
+
+IMPORTANT:
+Order status values are stored as lowercase strings.
+Use the exact values above in SQL comparisons.
+Do not convert them to uppercase.
+
+carrier_fault:
+- 1 = carrier fault
+- 0 = not carrier fault
+
+customer_fault:
+- 1 = customer fault
+- 0 = not customer fault
+
 
 ========================
 TABLE: tickets
@@ -66,6 +87,40 @@ TABLE: tickets
 - last_customer_message_at (TIMESTAMP)
 - historical_resolution (TEXT)
 
+Allowed tickets.status values:
+- open
+- closed
+
+Allowed tickets.channel values:
+- email
+- chat
+
+IMPORTANT:
+Ticket status and channel values are stored as lowercase strings.
+Use the exact values above in SQL comparisons.
+Do not convert them to uppercase.
+
+For example:
+
+Correct:
+SELECT *
+FROM tickets
+WHERE status = 'open';
+
+Incorrect:
+SELECT *
+FROM tickets
+WHERE status = 'OPEN';
+
+Correct:
+SELECT *
+FROM tickets
+WHERE channel = 'email';
+
+Incorrect:
+SELECT *
+FROM tickets
+WHERE channel = 'EMAIL';
 
 ========================
 TABLE: staff

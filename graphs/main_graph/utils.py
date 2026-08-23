@@ -32,6 +32,329 @@ def search_docs(query: str, k: int = 3) -> list[dict]:
         for document, metadata, distance in zip(documents, metadatas, distances)
     ]
 
+def _next_ticket_id(connection) -> str:
+    row = connection.execute(
+        """
+        SELECT ticket_id
+        FROM tickets
+        WHERE ticket_id GLOB 'TICKET-[0-9]*'
+        ORDER BY CAST(substr(ticket_id, 8) AS INTEGER) DESC
+        LIMIT 1
+        """
+    ).fetchone()
+
+    if not row:
+        return "TICKET-001"
+
+    next_number = int(str(row["ticket_id"]).split("-")[1]) + 1
+
+    return f"TICKET-{next_number:03d}"
+
+def create_ticket_in_database(
+    account_id: str,
+    subject: str,
+    description: str,
+    channel: str,
+    status: str = "OPEN",
+    assigned_to: Optional[str] = None,
+) -> str:
+    """
+    Create a ticket in the database.
+    """
+
+    connection = get_connection()
+
+    try:
+        ticket_id = _next_ticket_id(connection)
+
+        connection.execute(
+            """
+            INSERT INTO tickets (
+                ticket_id,
+                account_id,
+                created_at,
+                status,
+                subject,
+                description,
+                channel,
+                assigned_to,
+                last_customer_message_at,
+                historical_resolution
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                ticket_id,
+                account_id,
+                DATASET_REFERENCE_TIME,
+                status,
+                subject,
+                description,
+                channel,
+                assigned_to,
+                None,
+                None,
+            ),
+        )
+
+        connection.commit()
+
+        return ticket_id
+
+    finally:
+        connection.close()
+
+def update_ticket_in_database(
+    ticket_id: str,
+    subject: Optional[str] = None,
+    description: Optional[str] = None,
+    status: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+) -> None:
+    """
+    Update an existing ticket in the database.
+    """
+
+    fields = []
+    values = []
+
+    updates = {
+        "subject": subject,
+        "description": description,
+        "status": status,
+        "assigned_to": assigned_to,
+    }
+
+    for column, value in updates.items():
+        if value is not None:
+            fields.append(f"{column} = ?")
+            values.append(value)
+
+    if not fields:
+        raise ValueError("At least one field must be provided for update.")
+
+    values.append(ticket_id)
+
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            f"""
+            UPDATE tickets
+            SET {", ".join(fields)}
+            WHERE ticket_id = ?
+            """,
+            tuple(values),
+        )
+
+        if cursor.rowcount == 0:
+            raise ValueError(
+                f"No ticket found with ticket_id {ticket_id}."
+            )
+
+        connection.commit()
+
+    finally:
+        connection.close()
+
+def delete_ticket_in_database(ticket_id: str) -> None:
+    """
+    Delete an existing ticket from the database.
+    """
+
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            """
+            DELETE FROM tickets
+            WHERE ticket_id = ?
+            """,
+            (ticket_id,),
+        )
+
+        if cursor.rowcount == 0:
+            raise ValueError(
+                f"No ticket found with ticket_id {ticket_id}."
+            )
+
+        connection.commit()
+
+    finally:
+        connection.close()
+
+    
+def _next_order_id(connection) -> str:
+    row = connection.execute(
+        """
+        SELECT order_id
+        FROM orders
+        WHERE order_id GLOB 'ORD-[0-9]*'
+        ORDER BY CAST(substr(order_id, 7) AS INTEGER) DESC
+        LIMIT 1
+        """
+    ).fetchone()
+
+    if not row:
+        return "ORD-001"
+
+    next_number = int(str(row["order_id"]).split("-")[1]) + 1
+
+    return f"ORD-{next_number:03d}"
+
+def create_order_in_database(
+    account_id: str,
+    carrier: str,
+    status: str,
+    shipment_fee_inr: int,
+    booked_at: Optional[str] = None,
+    pickup_window_start: Optional[str] = None,
+    pickup_window_end: Optional[str] = None,
+    notes: Optional[str] = None,
+) -> str:
+    """
+    Create an order in the database.
+    """
+
+    connection = get_connection()
+
+    try:
+        order_id = _next_order_id(connection)
+
+        connection.execute(
+            """
+            INSERT INTO orders (
+                order_id,
+                account_id,
+                carrier,
+                status,
+                booked_at,
+                pickup_window_start,
+                pickup_window_end,
+                pickup_actual_at,
+                shipment_fee_inr,
+                carrier_fault,
+                customer_fault,
+                cancellation_requested_at,
+                notes
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                order_id,
+                account_id,
+                carrier,
+                status,
+                booked_at,
+                pickup_window_start,
+                pickup_window_end,
+                None,
+                shipment_fee_inr,
+                0,
+                0,
+                None,
+                notes,
+            ),
+        )
+
+        connection.commit()
+
+        return order_id
+
+    finally:
+        connection.close()
+
+
+def update_order_in_database(
+    order_id: str,
+    carrier: Optional[str] = None,
+    status: Optional[str] = None,
+    pickup_window_start: Optional[str] = None,
+    pickup_window_end: Optional[str] = None,
+    pickup_actual_at: Optional[str] = None,
+    shipment_fee_inr: Optional[float] = None,
+    carrier_fault: Optional[bool] = None,
+    customer_fault: Optional[bool] = None,
+    cancellation_requested_at: Optional[str] = None,
+    notes: Optional[str] = None,
+) -> None:
+    """
+    Update an existing order in the database.
+    """
+
+    fields = []
+    values = []
+
+    updates = {
+        "carrier": carrier,
+        "status": status,
+        "pickup_window_start": pickup_window_start,
+        "pickup_window_end": pickup_window_end,
+        "pickup_actual_at": pickup_actual_at,
+        "shipment_fee_inr": shipment_fee_inr,
+        "carrier_fault": carrier_fault,
+        "customer_fault": customer_fault,
+        "cancellation_requested_at": cancellation_requested_at,
+        "notes": notes,
+    }
+
+    for column, value in updates.items():
+        if value is not None:
+            fields.append(f"{column} = ?")
+            values.append(value)
+
+    if not fields:
+        raise ValueError("At least one field must be provided for update.")
+
+    values.append(order_id)
+
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            f"""
+            UPDATE orders
+            SET {", ".join(fields)}
+            WHERE order_id = ?
+            """,
+            tuple(values),
+        )
+
+        if cursor.rowcount == 0:
+            raise ValueError(
+                f"No order found with order_id {order_id}."
+            )
+
+        connection.commit()
+
+    finally:
+        connection.close()
+
+def delete_order_in_database(order_id: str) -> None:
+    """
+    Delete an existing order from the database.
+    """
+
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            """
+            DELETE FROM orders
+            WHERE order_id = ?
+            """,
+            (order_id,),
+        )
+
+        if cursor.rowcount == 0:
+            raise ValueError(
+                f"No order found with order_id {order_id}."
+            )
+
+        connection.commit()
+
+    finally:
+        connection.close()
 
 def create_task_in_database(
     title: str,

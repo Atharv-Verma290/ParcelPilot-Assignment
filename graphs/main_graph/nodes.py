@@ -13,10 +13,16 @@ from .tools import all_tools
 from .utils import (
     create_staff_in_database,
     create_task_in_database,
-    delete_staff_in_database,
     delete_task_in_database,
+    delete_staff_in_database,
+    delete_ticket_in_database,
+    delete_order_in_database,
     update_staff_in_database,
     update_task_in_database,
+    create_ticket_in_database,
+    update_ticket_in_database,
+    create_order_in_database,
+    update_order_in_database,
 )
 
 load_dotenv()
@@ -119,9 +125,9 @@ def perform_action(state: AgentState):
     action_type = action.get("action")
     proposal = action.get("proposal", {})
 
-    # -----------------------------------------------------
+    # =====================================================
     # Create follow-up task
-    # -----------------------------------------------------
+    # =====================================================
 
     if action_type == "create_follow_up_task":
 
@@ -143,9 +149,9 @@ def perform_action(state: AgentState):
             ],
         }
 
-    # -----------------------------------------------------
+    # =====================================================
     # Update follow-up task
-    # -----------------------------------------------------
+    # =====================================================
 
     if action_type == "update_follow_up_task":
 
@@ -173,9 +179,9 @@ def perform_action(state: AgentState):
             ],
         }
 
-    # -----------------------------------------------------
+    # =====================================================
     # Delete follow-up task
-    # -----------------------------------------------------
+    # =====================================================
 
     if action_type == "delete_follow_up_task":
 
@@ -196,9 +202,189 @@ def perform_action(state: AgentState):
             ],
         }
 
-    # -----------------------------------------------------
+    # =====================================================
+    # Create ticket
+    # =====================================================
+
+    if action_type == "create_ticket":
+
+        ticket_id = create_ticket_in_database(
+            account_id=proposal["account_id"],
+            subject=proposal["subject"],
+            description=proposal["description"],
+            channel=proposal["channel"],
+            status=proposal.get("status", "OPEN"),
+            assigned_to=proposal.get("assigned_to"),
+        )
+
+        return {
+            "pending_action": None,
+            "messages": [
+                AIMessage(
+                    content=(
+                        f"Ticket created successfully. "
+                        f"Ticket ID: {ticket_id}"
+                    )
+                )
+            ],
+        }
+
+    # =====================================================
+    # Update ticket
+    # =====================================================
+
+    if action_type == "update_ticket":
+
+        update_ticket_in_database(
+            ticket_id=proposal["ticket_id"],
+            subject=proposal.get("subject"),
+            description=proposal.get("description"),
+            status=proposal.get("status"),
+            assigned_to=proposal.get("assigned_to"),
+        )
+
+        return {
+            "pending_action": None,
+            "messages": [
+                AIMessage(
+                    content=(
+                        f"Ticket "
+                        f"{proposal['ticket_id']} "
+                        f"updated successfully."
+                    )
+                )
+            ],
+        }
+
+    # =====================================================
+    # Delete ticket
+    # =====================================================
+
+    if action_type == "delete_ticket":
+
+        delete_ticket_in_database(
+            ticket_id=proposal["ticket_id"],
+        )
+
+        return {
+            "pending_action": None,
+            "messages": [
+                AIMessage(
+                    content=(
+                        f"Ticket "
+                        f"{proposal['ticket_id']} "
+                        f"deleted successfully."
+                    )
+                )
+            ],
+        }
+
+    # =====================================================
+    # Create order
+    # =====================================================
+
+    if action_type == "create_order":
+
+        order_id = create_order_in_database(
+            account_id=proposal["account_id"],
+            carrier=proposal["carrier"],
+            status=proposal["status"],
+            shipment_fee_inr=proposal["shipment_fee_inr"],
+            booked_at=proposal.get("booked_at"),
+            pickup_window_start=proposal.get(
+                "pickup_window_start"
+            ),
+            pickup_window_end=proposal.get(
+                "pickup_window_end"
+            ),
+            notes=proposal.get("notes"),
+        )
+
+        return {
+            "pending_action": None,
+            "messages": [
+                AIMessage(
+                    content=(
+                        f"Order created successfully. "
+                        f"Order ID: {order_id}"
+                    )
+                )
+            ],
+        }
+
+    # =====================================================
+    # Update order
+    # =====================================================
+
+    if action_type == "update_order":
+
+        update_order_in_database(
+            order_id=proposal["order_id"],
+            carrier=proposal.get("carrier"),
+            status=proposal.get("status"),
+            pickup_window_start=proposal.get(
+                "pickup_window_start"
+            ),
+            pickup_window_end=proposal.get(
+                "pickup_window_end"
+            ),
+            pickup_actual_at=proposal.get(
+                "pickup_actual_at"
+            ),
+            shipment_fee_inr=proposal.get(
+                "shipment_fee_inr"
+            ),
+            carrier_fault=proposal.get(
+                "carrier_fault"
+            ),
+            customer_fault=proposal.get(
+                "customer_fault"
+            ),
+            cancellation_requested_at=proposal.get(
+                "cancellation_requested_at"
+            ),
+            notes=proposal.get("notes"),
+        )
+
+        return {
+            "pending_action": None,
+            "messages": [
+                AIMessage(
+                    content=(
+                        f"Order "
+                        f"{proposal['order_id']} "
+                        f"updated successfully."
+                    )
+                )
+            ],
+        }
+
+    # =====================================================
+    # Delete order
+    # =====================================================
+
+    if action_type == "delete_order":
+
+        delete_order_in_database(
+            order_id=proposal["order_id"],
+        )
+
+        return {
+            "pending_action": None,
+            "messages": [
+                AIMessage(
+                    content=(
+                        f"Order "
+                        f"{proposal['order_id']} "
+                        f"deleted successfully."
+                    )
+                )
+            ],
+        }
+
+    # =====================================================
     # Create staff
-    # -----------------------------------------------------
+    # =====================================================
 
     if action_type == "create_staff":
 
@@ -219,9 +405,9 @@ def perform_action(state: AgentState):
             ],
         }
 
-    # -----------------------------------------------------
+    # =====================================================
     # Update staff
-    # -----------------------------------------------------
+    # =====================================================
 
     if action_type == "update_staff":
 
@@ -244,18 +430,22 @@ def perform_action(state: AgentState):
             ],
         }
 
-    # -----------------------------------------------------
+    # =====================================================
     # Delete staff
-    # -----------------------------------------------------
+    # =====================================================
 
     if action_type == "delete_staff":
 
         if state.get("user_id") == proposal["user_id"]:
+
             return {
                 "pending_action": None,
                 "messages": [
                     AIMessage(
-                        content="Operation denied: you cannot delete your own staff account."
+                        content=(
+                            "Operation denied: you cannot "
+                            "delete your own staff account."
+                        )
                     )
                 ],
             }
@@ -277,9 +467,9 @@ def perform_action(state: AgentState):
             ],
         }
 
-    # -----------------------------------------------------
+    # =====================================================
     # Unknown action
-    # -----------------------------------------------------
+    # =====================================================
 
     return {
         "pending_action": None,
