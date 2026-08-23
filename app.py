@@ -11,7 +11,7 @@ from langgraph.types import Command
 
 from graphs.main_graph.graph import build_graph
 from graphs.main_graph.states import AgentState
-from auth.users import USERS
+from auth.users import get_all_staff, get_staff_by_name
 
 
 st.set_page_config(
@@ -37,8 +37,12 @@ if "waiting_for_input" not in st.session_state:
 if "graph" not in st.session_state:
     st.session_state.graph = build_graph()
 
-if "selected_user" not in st.session_state:
-    st.session_state.selected_user = next(iter(USERS))
+staff = get_all_staff()
+staff_by_name = {person["name"]: person for person in staff}
+staff_names = list(staff_by_name)
+
+if "selected_user" not in st.session_state or st.session_state.selected_user not in staff_by_name:
+    st.session_state.selected_user = staff_names[0] if staff_names else ""
 
 
 # ---------------------------------------------------------
@@ -114,7 +118,7 @@ def sync_messages_from_graph(output) -> None:
 
 def process_graph_input(user_input: str):
     graph = st.session_state.graph
-    user = USERS[st.session_state.selected_user]
+    user = staff_by_name[st.session_state.selected_user]
     config = get_graph_config()
 
     if st.session_state.waiting_for_input:
@@ -178,15 +182,17 @@ with st.sidebar:
 
     st.divider()
 
-    st.selectbox(
-        "Logged in as",
-        list(USERS.keys()),
-        key="selected_user",
-    )
+    if not staff_names:
+        st.error("No staff records found.")
+    else:
+        st.selectbox(
+            "Logged in as",
+            staff_names,
+            key="selected_user",
+        )
 
-    user = USERS[st.session_state.selected_user]
-
-    st.write(f"Role: {user['role']}")
+        user = staff_by_name[st.session_state.selected_user]
+        st.write(f"Role: {user['role']}")
 
 
 # ---------------------------------------------------------
