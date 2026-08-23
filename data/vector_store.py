@@ -5,17 +5,6 @@ load_dotenv()
 
 client = chromadb.PersistentClient(path="./data/chroma")
 
-# embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-#     model_name="all-MiniLM-L6-v2" 
-# )
-
-# embedding_function = embedding_functions.GoogleGeminiEmbeddingFunction(
-#     api_key_env_var="GOOGLE_API_KEY",
-#     model_name="gemini-embedding-001",
-#     task_type="RETRIEVAL_DOCUMENT",
-#     dimension=768
-# )
-
 embedding_function = embedding_functions.OpenAIEmbeddingFunction(
     api_key_env_var="OPENAI_API_KEY",
     model_name="text-embedding-3-small",
@@ -29,6 +18,12 @@ collection = client.get_or_create_collection(
 
 
 def reset_collection() -> None:
+    """
+    Delete and recreate the ParcelPilot Chroma collection.
+
+    Existing embeddings are discarded. The module-level `collection`
+    handle is replaced with the new empty collection.
+    """
     global collection
 
     try:
@@ -42,6 +37,14 @@ def reset_collection() -> None:
     )
 
 def add_chunks(chunks):
+    """
+    Embed and insert document chunks into the Chroma collection.
+
+    Args:
+        chunks: Sequence of dicts with `text` and `metadata` keys.
+            `metadata` must include a `source` field used to build
+            document IDs.
+    """
     documents = []
     metadatas = []
     ids = []

@@ -1,23 +1,29 @@
 import json
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-from .states import ACTION_SCHEMAS, ActionProposalState, ActionProposal
+from .states import ACTION_SCHEMAS, ActionProposalState
 from .prompts import ACTION_PROPOSAL_SYSTEM_PROMPT, STRUCTURE_PROPOSAL_SYSTEM_PROMPT
 from .tools import proposal_tools
 
 llm = ChatOpenAI(model="gpt-5.6-luna", reasoning_effort="none")
 
 proposal_llm = llm.bind_tools(proposal_tools)
-# structured_llm = llm.with_structured_output(ActionProposal)
 
 
 def create_proposal(state: ActionProposalState):
     """
-    Determine which action proposal should be created and call the
-    appropriate proposal tool.
+    Choose a proposal tool and emit one tool call.
 
     This node only creates a proposal. It never executes the action
     or modifies the database.
+
+    Args:
+        state: Proposal subgraph state with `instruction` and
+            `messages`.
+
+    Returns:
+        A state update with the model response. `error` is set if
+        the model did not call a tool or the call failed.
     """
     try:
         message_history = state.get("messages", [])
@@ -49,9 +55,18 @@ def create_proposal(state: ActionProposalState):
 
 def structure_proposal(state: ActionProposalState):
     """
-    Convert the proposal tool result into a validated ActionProposal.
+    Validate the proposal tool JSON into a typed action schema.
 
-    This node does not execute the proposed action.
+    Binds a structured LLM to the schema for the chosen `action`.
+    Does not execute the proposed write.
+
+    Args:
+        state: Proposal subgraph state whose last message is the
+            tool result.
+
+    Returns:
+        `action` and `proposal` on success, or `error` if the
+        result is missing, unsupported, or invalid.
     """
     try:
         messages = state.get("messages", [])

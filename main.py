@@ -5,6 +5,13 @@ from data.ingest import ingest_documents
 
 
 def initialize() -> None:
+    """
+    Rebuild SQLite tables, seed staff, and ingest documents.
+
+    This replaces the operational database, follow-up tasks table,
+    staff table, and Chroma document index from the source Excel
+    and PDF files.
+    """
     print("=== ParcelPilot initialization ===\n")
 
     print("1. Extracting Excel data into SQLite...")
@@ -26,6 +33,9 @@ def initialize() -> None:
 
 
 def main() -> None:
+    """
+    Entry point for one-time ParcelPilot data initialization.
+    """
     initialize()
 
 

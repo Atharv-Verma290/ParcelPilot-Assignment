@@ -14,6 +14,16 @@ collection = client.get_collection(
 )
 
 def search_docs(query: str, k: int = 3) -> list[dict]:
+    """
+    Retrieve the nearest documentation chunks from Chroma.
+
+    Args:
+        query: Natural-language search text.
+        k: Maximum number of chunks to return.
+
+    Returns:
+        Chunks with `text`, `metadata`, and `distance`.
+    """
     results = collection.query(
         query_texts=[query],
         n_results=k
@@ -33,6 +43,15 @@ def search_docs(query: str, k: int = 3) -> list[dict]:
     ]
 
 def _next_ticket_id(connection) -> str:
+    """
+    Allocate the next sequential `TICKET-NNN` identifier.
+
+    Args:
+        connection: Open SQLite connection.
+
+    Returns:
+        The next unused ticket ID, starting at `TICKET-001`.
+    """
     row = connection.execute(
         """
         SELECT ticket_id
@@ -59,9 +78,22 @@ def create_ticket_in_database(
     assigned_to: Optional[str] = None,
 ) -> str:
     """
-    Create a ticket in the database.
-    """
+    Insert a new ticket and return its generated ID.
 
+    `created_at` is set to `DATASET_REFERENCE_TIME`. Customer-message
+    and historical-resolution fields start empty.
+
+    Args:
+        account_id: Account the ticket belongs to.
+        subject: Short ticket subject.
+        description: Ticket body.
+        channel: Intake channel, such as email.
+        status: Initial status. Defaults to `"OPEN"`.
+        assigned_to: Optional assignee.
+
+    Returns:
+        The new `ticket_id`.
+    """
     connection = get_connection()
 
     try:
@@ -112,9 +144,18 @@ def update_ticket_in_database(
     assigned_to: Optional[str] = None,
 ) -> None:
     """
-    Update an existing ticket in the database.
-    """
+    Patch non-null fields on an existing ticket.
 
+    Args:
+        ticket_id: Ticket to update.
+        subject: Replacement subject, if provided.
+        description: Replacement description, if provided.
+        status: Replacement status, if provided.
+        assigned_to: Replacement assignee, if provided.
+
+    Raises:
+        ValueError: If no fields are provided or the ticket is missing.
+    """
     fields = []
     values = []
 
@@ -159,9 +200,14 @@ def update_ticket_in_database(
 
 def delete_ticket_in_database(ticket_id: str) -> None:
     """
-    Delete an existing ticket from the database.
-    """
+    Delete a ticket by ID.
 
+    Args:
+        ticket_id: Ticket to remove.
+
+    Raises:
+        ValueError: If no ticket matches `ticket_id`.
+    """
     connection = get_connection()
 
     try:
@@ -185,6 +231,15 @@ def delete_ticket_in_database(ticket_id: str) -> None:
 
     
 def _next_order_id(connection) -> str:
+    """
+    Allocate the next sequential `ORD-NNN` identifier.
+
+    Args:
+        connection: Open SQLite connection.
+
+    Returns:
+        The next unused order ID, starting at `ORD-001`.
+    """
     row = connection.execute(
         """
         SELECT order_id
@@ -213,9 +268,23 @@ def create_order_in_database(
     notes: Optional[str] = None,
 ) -> str:
     """
-    Create an order in the database.
-    """
+    Insert a new order and return its generated ID.
 
+    Pickup-actual, fault flags, and cancellation time start unset.
+
+    Args:
+        account_id: Account placing the order.
+        carrier: Carrier name.
+        status: Initial order status.
+        shipment_fee_inr: Shipment fee in INR.
+        booked_at: Optional booking timestamp.
+        pickup_window_start: Optional pickup window start.
+        pickup_window_end: Optional pickup window end.
+        notes: Optional free-text notes.
+
+    Returns:
+        The new `order_id`.
+    """
     connection = get_connection()
 
     try:
@@ -279,9 +348,24 @@ def update_order_in_database(
     notes: Optional[str] = None,
 ) -> None:
     """
-    Update an existing order in the database.
-    """
+    Patch non-null fields on an existing order.
 
+    Args:
+        order_id: Order to update.
+        carrier: Replacement carrier, if provided.
+        status: Replacement status, if provided.
+        pickup_window_start: Replacement window start, if provided.
+        pickup_window_end: Replacement window end, if provided.
+        pickup_actual_at: Actual pickup time, if provided.
+        shipment_fee_inr: Replacement fee, if provided.
+        carrier_fault: Carrier-fault flag, if provided.
+        customer_fault: Customer-fault flag, if provided.
+        cancellation_requested_at: Cancellation time, if provided.
+        notes: Replacement notes, if provided.
+
+    Raises:
+        ValueError: If no fields are provided or the order is missing.
+    """
     fields = []
     values = []
 
@@ -332,9 +416,14 @@ def update_order_in_database(
 
 def delete_order_in_database(order_id: str) -> None:
     """
-    Delete an existing order from the database.
-    """
+    Delete an order by ID.
 
+    Args:
+        order_id: Order to remove.
+
+    Raises:
+        ValueError: If no order matches `order_id`.
+    """
     connection = get_connection()
 
     try:
@@ -365,8 +454,20 @@ def create_task_in_database(
     order_id: Optional[str] = None,
 ) -> str:
     """
-    Create a follow-up task in the database.
-    
+    Insert a follow-up task with status `OPEN`.
+
+    `created_at` is set to `DATASET_REFERENCE_TIME`.
+
+    Args:
+        title: Task title.
+        description: Task details.
+        priority: One of LOW, MEDIUM, HIGH, URGENT.
+        assigned_team: Team responsible for the task.
+        ticket_id: Optional related ticket.
+        order_id: Optional related order.
+
+    Returns:
+        The new integer `task_id`.
     """
     connection = get_connection()
 
@@ -415,6 +516,22 @@ def update_task_in_database(
     ticket_id: Optional[str] = None,
     order_id: Optional[str] = None,
 ) -> None:
+    """
+    Patch non-null fields on an existing follow-up task.
+
+    Args:
+        task_id: Task to update.
+        title: Replacement title, if provided.
+        description: Replacement description, if provided.
+        priority: Replacement priority, if provided.
+        assigned_team: Replacement team, if provided.
+        status: Replacement status, if provided.
+        ticket_id: Replacement related ticket, if provided.
+        order_id: Replacement related order, if provided.
+
+    Raises:
+        ValueError: If no fields are provided or the task is missing.
+    """
     fields = []
     values = []
 
@@ -459,6 +576,15 @@ def update_task_in_database(
 
 
 def delete_task_in_database(task_id: int) -> None:
+    """
+    Delete a follow-up task by ID.
+
+    Args:
+        task_id: Task to remove.
+
+    Raises:
+        ValueError: If no task matches `task_id`.
+    """
     connection = get_connection()
 
     try:
@@ -480,6 +606,15 @@ def delete_task_in_database(task_id: int) -> None:
 
 
 def _next_staff_user_id(connection) -> str:
+    """
+    Allocate the next sequential `STAFF-NNN` identifier.
+
+    Args:
+        connection: Open SQLite connection.
+
+    Returns:
+        The next unused staff ID, starting at `STAFF-001`.
+    """
     row = connection.execute(
         """
         SELECT user_id
@@ -498,6 +633,18 @@ def _next_staff_user_id(connection) -> str:
 
 
 def create_staff_in_database(name: str, role: str) -> str:
+    """
+    Insert a staff member and return the generated user ID.
+
+    `created_at` is set to `DATASET_REFERENCE_TIME`.
+
+    Args:
+        name: Display name.
+        role: One of SUPPORT, OPERATIONS, ADMIN.
+
+    Returns:
+        The new `user_id`.
+    """
     connection = get_connection()
 
     try:
@@ -531,6 +678,18 @@ def update_staff_in_database(
     name: Optional[str] = None,
     role: Optional[str] = None,
 ) -> None:
+    """
+    Patch name and/or role on an existing staff row.
+
+    Args:
+        user_id: Staff member to update.
+        name: Replacement name, if provided.
+        role: Replacement role, if provided.
+
+    Raises:
+        ValueError: If neither field is provided or the staff row is
+            missing.
+    """
     if name is None and role is None:
         raise ValueError("At least one of name or role must be provided.")
 
@@ -568,6 +727,15 @@ def update_staff_in_database(
 
 
 def delete_staff_in_database(user_id: str) -> None:
+    """
+    Delete a staff member by user ID.
+
+    Args:
+        user_id: Staff member to remove.
+
+    Raises:
+        ValueError: If no staff row matches `user_id`.
+    """
     connection = get_connection()
 
     try:

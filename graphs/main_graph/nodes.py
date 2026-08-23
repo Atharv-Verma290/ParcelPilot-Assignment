@@ -37,6 +37,18 @@ APPROVAL_WORDS = {"yes", "approve", "approved", "confirm"}
 
 
 def execution_result_message(content: str) -> AIMessage:
+    """
+    Build an assistant message that reports a write already executed.
+
+    The `name="perform_action"` marker tells the agent to treat the
+    content as an authoritative database result, not a proposal.
+
+    Args:
+        content: Outcome text shown to the user.
+
+    Returns:
+        An `AIMessage` attributed to the `perform_action` node.
+    """
     return AIMessage(
         content=content,
         name="perform_action",
@@ -60,12 +72,35 @@ SUPPORTED_ACTIONS = {
 
 
 def human_node(state: AgentState):
+    """
+    Pause the graph until the user sends the next chat message.
+
+    Args:
+        state: Current agent state. Unused beyond the interrupt.
+
+    Returns:
+        A state update with the user's reply as a `HumanMessage`.
+    """
     human_input = interrupt("Please enter your input: ")
 
     return {"messages": [HumanMessage(content=human_input, name="human")]}
 
 
 def route_human(state: AgentState) -> Literal[END, "perform_action", "agent"]:
+    """
+    Decide where to go after a human message.
+
+    `"exit"` ends the graph. If a proposal is pending and the user
+    approved it, route to `perform_action`. Otherwise return to the
+    agent.
+
+    Args:
+        state: Agent state including the latest human message and
+            optional `pending_action`.
+
+    Returns:
+        `"perform_action"`, `"agent"`, or `END`.
+    """
     human_input = state.get("messages", [])[-1].content
 
     if human_input.strip().lower() == "exit":
@@ -81,6 +116,15 @@ def route_human(state: AgentState) -> Literal[END, "perform_action", "agent"]:
 
 
 def agent_node(state: AgentState):
+    """
+    Call the tool-bound LLM with the system prompt and history.
+
+    Args:
+        state: Agent state whose `messages` are the conversation.
+
+    Returns:
+        A state update containing the model response.
+    """
     message_history = state.get("messages", [])
 
     messages = [
@@ -95,6 +139,18 @@ def agent_node(state: AgentState):
 
 
 def process_tool_result(state: AgentState):
+    """
+    Store a valid action proposal from the latest tool message.
+
+    Non-JSON tool output and unsupported actions are ignored.
+
+    Args:
+        state: Agent state whose last message may be a tool result.
+
+    Returns:
+        `pending_action` when the tool returned a supported proposal,
+        otherwise an empty update.
+    """
     last_message = state.get("messages", [])[-1]
 
     # Only process tool outputs.
@@ -129,7 +185,19 @@ def process_tool_result(state: AgentState):
 
 
 def perform_action(state: AgentState):
+    """
+    Execute the pending approved write against SQLite.
 
+    Clears `pending_action` and appends a named result message.
+    Staff cannot delete their own account.
+
+    Args:
+        state: Agent state with `pending_action` and `user_id`.
+
+    Returns:
+        A state update with the execution result, or `{}` if nothing
+        is pending.
+    """
     action = state.get("pending_action")
 
     if not action:

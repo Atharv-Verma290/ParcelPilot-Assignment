@@ -7,6 +7,19 @@ from data.database import execute_query, get_connection
 from .states import StructuredDataState
 
 def get_required_permission(sql: str) -> set[Permission]:
+    """
+    Infer which read permissions a SQL statement needs.
+
+    Table names are matched as substrings of the lowercased SQL.
+
+    Args:
+        sql: Query text to inspect.
+
+    Returns:
+        `READ_STAFF` if `staff` is mentioned, and
+        `READ_OPERATIONAL_DATA` if accounts, orders, tickets, or
+        follow_up_tasks are mentioned. The set may be empty.
+    """
     normalized_sql = sql.lower() 
 
     permissions = set() 
@@ -68,9 +81,4 @@ def execute_sql(sql: str, runtime: ToolRuntime) -> str:
         return "No rows returned."
 
     return json.dumps(rows, default=str)
-
-
-@tool 
-def query_staff_data(sql: str, runtime: ToolRuntime) -> str:
-    """sdfsdfs"""
 

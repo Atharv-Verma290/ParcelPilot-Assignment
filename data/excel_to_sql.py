@@ -13,6 +13,15 @@ DB_PATH = Path("data/parcel_pilot.db")
 # ---------------------------------------------------------------------------
 
 def normalize_column_name(name: str) -> str:
+    """
+    Convert a spreadsheet header into a snake_case SQL column name.
+
+    Args:
+        name: Raw column header from Excel.
+
+    Returns:
+        Lowercased name with spaces and hyphens replaced by underscores.
+    """
     return (
         str(name)
         .strip()
@@ -23,6 +32,21 @@ def normalize_column_name(name: str) -> str:
 
 
 def to_bool(value):
+    """
+    Coerce a spreadsheet cell into a boolean or None.
+
+    Accepts pandas NA, Python bools, and common string/numeric
+    representations such as `true`, `yes`, `1`, `false`, `no`, and `0`.
+
+    Args:
+        value: Cell value from Excel.
+
+    Returns:
+        `True`, `False`, or `None` if the cell is empty.
+
+    Raises:
+        ValueError: If the value cannot be interpreted as a boolean.
+    """
     if pd.isna(value):
         return None
 
@@ -41,6 +65,16 @@ def to_bool(value):
 
 
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Return a copy of `df` with snake_case column names.
+
+    Args:
+        df: Input DataFrame.
+
+    Returns:
+        A copy whose headers have been passed through
+        `normalize_column_name`.
+    """
     df = df.copy()
 
     df.columns = [
@@ -56,6 +90,18 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 def normalize_accounts(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normalize the accounts sheet for SQLite insertion.
+
+    Column names are snake_cased, `premium_support` is coerced to
+    boolean, and identifier/text columns are stored as pandas strings.
+
+    Args:
+        df: Raw accounts sheet.
+
+    Returns:
+        Typed accounts DataFrame.
+    """
     df = normalize_columns(df)
 
     df["premium_support"] = (
@@ -79,6 +125,18 @@ def normalize_accounts(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def normalize_orders(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normalize the orders sheet for SQLite insertion.
+
+    Boolean fault flags, pickup/booking timestamps, and shipment
+    fees are coerced to their target types.
+
+    Args:
+        df: Raw orders sheet.
+
+    Returns:
+        Typed orders DataFrame.
+    """
     df = normalize_columns(df)
 
     boolean_columns = [
@@ -123,6 +181,18 @@ def normalize_orders(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def normalize_tickets(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normalize the tickets sheet for SQLite insertion.
+
+    Timestamp columns are parsed and identifier/text columns are
+    stored as pandas strings.
+
+    Args:
+        df: Raw tickets sheet.
+
+    Returns:
+        Typed tickets DataFrame.
+    """
     df = normalize_columns(df)
 
     datetime_columns = [
@@ -160,7 +230,18 @@ def normalize_tickets(df: pd.DataFrame) -> pd.DataFrame:
 def extract_readme_metadata(
     df: pd.DataFrame,
 ) -> dict[str, str]:
+    """
+    Parse the README sheet as a key/value map.
 
+    Each row's first cell is the key and the second cell is the
+    value. Empty keys are skipped; empty values become `""`.
+
+    Args:
+        df: README sheet contents.
+
+    Returns:
+        Mapping of metadata keys to string values.
+    """
     metadata = {}
 
     for _, row in df.iterrows():
@@ -193,7 +274,17 @@ def validate_required_columns(
     table_name: str,
     required_columns: set[str],
 ) -> None:
+    """
+    Ensure a DataFrame contains every required column.
 
+    Args:
+        df: Table data after column normalization.
+        table_name: Name used in the error message.
+        required_columns: Column names that must be present.
+
+    Raises:
+        ValueError: If any required columns are missing.
+    """
     missing = required_columns - set(df.columns)
 
     if missing:
@@ -208,7 +299,18 @@ def validate_data(
     orders: pd.DataFrame,
     tickets: pd.DataFrame,
 ) -> None:
+    """
+    Check required columns, unique IDs, and account foreign keys.
 
+    Args:
+        accounts: Normalized accounts table.
+        orders: Normalized orders table.
+        tickets: Normalized tickets table.
+
+    Raises:
+        ValueError: If columns are missing, IDs are duplicated, or
+            orders/tickets reference unknown accounts.
+    """
     validate_required_columns(
         accounts,
         "accounts",
@@ -298,7 +400,15 @@ def validate_data(
 def create_database_schema(
     conn: sqlite3.Connection,
 ) -> None:
+    """
+    Create the accounts, orders, tickets, and metadata tables.
 
+    Foreign-key enforcement is turned on for this connection.
+    Tables are created empty; callers insert rows afterward.
+
+    Args:
+        conn: Open SQLite connection.
+    """
     # Make SQLite enforce foreign keys.
     conn.execute("PRAGMA foreign_keys = ON")
 
@@ -385,7 +495,19 @@ def write_to_sqlite(
     tickets: pd.DataFrame,
     metadata: dict[str, str],
 ) -> None:
+    """
+    Replace the SQLite database with the given tables.
 
+    If `db_path` already exists it is deleted so the schema is
+    recreated from scratch.
+
+    Args:
+        db_path: Destination database file.
+        accounts: Normalized accounts rows.
+        orders: Normalized orders rows.
+        tickets: Normalized tickets rows.
+        metadata: README key/value pairs written to `metadata`.
+    """
     db_path.parent.mkdir(
         parents=True,
         exist_ok=True,
@@ -449,7 +571,15 @@ def write_to_sqlite(
 def get_database_schema(
     db_path: Path,
 ) -> str:
+    """
+    Build a human-readable summary of tables, columns, and FKs.
 
+    Args:
+        db_path: Path to an existing SQLite database.
+
+    Returns:
+        Multiline string describing each user table.
+    """
     schema = []
 
     with sqlite3.connect(db_path) as conn:
@@ -516,7 +646,20 @@ def ingest_excel_to_sqlite(
     excel_path: Path,
     db_path: Path,
 ) -> None:
+    """
+    Load the assessment workbook and write it to SQLite.
 
+    Reads the README, accounts, orders, and tickets sheets,
+    normalizes and validates them, then replaces `db_path`.
+
+    Args:
+        excel_path: Path to the Excel workbook.
+        db_path: Destination SQLite file.
+
+    Raises:
+        ValueError: If the README sheet is missing or validation
+            fails.
+    """
     print(f"Reading workbook: {excel_path}")
 
     sheets = pd.read_excel(

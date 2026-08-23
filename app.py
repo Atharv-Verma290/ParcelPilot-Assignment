@@ -102,6 +102,18 @@ def switch_user():
 # ---------------------------------------------------------
 
 def format_as_markdown(value) -> str:
+    """
+    Convert a value into a string suitable for Streamlit markdown.
+
+    Dicts, lists, and JSON strings are pretty-printed. Other values
+    are returned as stripped text.
+
+    Args:
+        value: Message content, tool arguments, or tool output.
+
+    Returns:
+        A display string, or `""` if `value` is `None`.
+    """
     if value is None:
         return ""
 
@@ -190,6 +202,15 @@ def display_message(message):
 # ---------------------------------------------------------
 
 def get_graph_config():
+    """
+    Return the LangGraph config for the current Streamlit session.
+
+    The `thread_id` selects the checkpoint so conversation state
+    is isolated per thread.
+
+    Returns:
+        A config dict with `configurable.thread_id`.
+    """
     return {
         "configurable": {
             "thread_id": st.session_state.thread_id
@@ -227,7 +248,19 @@ def sync_messages_from_graph(output) -> None:
 # ---------------------------------------------------------
 
 def process_graph_input(user_input: str):
+    """
+    Run or resume the agent graph with the latest user input.
 
+    If the graph is interrupted and waiting for a human, the input
+    is passed as a resume `Command`. Otherwise a new turn is started
+    with the selected staff user's `user_id` and `role`.
+
+    Args:
+        user_input: Text from the chat box.
+
+    Returns:
+        The graph output state, including `messages`.
+    """
     graph = st.session_state.graph
 
     user = staff_by_name[

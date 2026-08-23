@@ -8,6 +8,17 @@ DOCS_DIR = Path("data/docs")
 
 
 def ingest_documents(docs_dir: Path = DOCS_DIR) -> None:
+    """
+    Parse PDFs in `docs_dir`, split them into sections, and store
+    the chunks in Chroma.
+
+    The collection is reset first so ingestion always starts from
+    a clean index.
+
+    Args:
+        docs_dir: Directory containing PDF files. Defaults to
+            `data/docs`.
+    """
     reset_collection()
 
     pdf_paths = sorted(docs_dir.glob("*.pdf"))

@@ -42,6 +42,18 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
 
 
 def has_permission(role: Role | str, permission: Permission) -> bool:
+    """
+    Return whether a role is allowed to use a permission.
+
+    Unknown role values are treated as unauthorized.
+
+    Args:
+        role: Staff role, as a `Role` or its string value.
+        permission: Permission to check.
+
+    Returns:
+        `True` if the role includes the permission, otherwise `False`.
+    """
     try:
         role = Role(role)
     except ValueError:
@@ -51,5 +63,15 @@ def has_permission(role: Role | str, permission: Permission) -> bool:
 
 
 def require_permission(role: Role | str, permission: Permission) -> None:
+    """
+    Raise if a role does not have the given permission.
+
+    Args:
+        role: Staff role, as a `Role` or its string value.
+        permission: Permission that must be granted.
+
+    Raises:
+        PermissionError: If the role is missing the permission.
+    """
     if not has_permission(role, permission):
         raise PermissionError(f"Role '{role}' does not have permission '{permission.value}'.")

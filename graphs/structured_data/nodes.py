@@ -14,6 +14,19 @@ llm = ChatOpenAI(model="gpt-5.6-luna", reasoning_effort="none").bind_tools([exec
 
 
 def structured_data_agent(state: StructuredDataState) -> dict:
+    """
+    Call the SQL-tool-bound LLM for one retrieval step.
+
+    The instruction is sent as a human message together with prior
+    tool results so the model can iterate on queries.
+
+    Args:
+        state: Structured-data subgraph state with `instruction`
+            and `messages`.
+
+    Returns:
+        A state update containing the model response.
+    """
     message_history = state.get("messages", [])
     instruction = state.get("instruction", "")
 

@@ -14,6 +14,16 @@ from .tools import all_tools
 
 
 def build_graph():
+    """
+    Compile the main support-agent graph with an in-memory checkpointer.
+
+    The loop is agent → tools (optional) → process_tool_result → agent,
+    with a human interrupt after the agent when no tools are called.
+    Approved pending actions go through `perform_action`.
+
+    Returns:
+        A compiled LangGraph runnable.
+    """
     builder = StateGraph(AgentState)
     builder.add_node("human", human_node)
     builder.add_node("agent", agent_node)

@@ -193,9 +193,6 @@ ActionProposalData = Annotated[
         )
     )
 ]
-    
-class ActionProposal(BaseModel):
-    output: ActionProposalData
 
 
 ACTION_SCHEMAS = {

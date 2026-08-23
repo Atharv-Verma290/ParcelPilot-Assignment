@@ -24,6 +24,12 @@ CREATE TABLE IF NOT EXISTS follow_up_tasks (
 """
 
 def create_task_table():
+    """
+    Drop and recreate the `follow_up_tasks` table.
+
+    Existing follow-up tasks are removed. Foreign keys to tickets
+    and orders are defined on the new table.
+    """
     connection = get_connection()
     try:
         connection.execute("DROP TABLE IF EXISTS follow_up_tasks")

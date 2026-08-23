@@ -22,6 +22,12 @@ INITIAL_STAFF = [
 DATASET_REFERENCE_TIME = datetime(2026, 8, 16, 11, 0, 0, tzinfo=ZoneInfo("Asia/Kolkata"))
 
 def seed_staff():
+    """
+    Insert the initial staff roster if those user IDs are missing.
+
+    Existing staff rows are left unchanged (`INSERT OR IGNORE`).
+    Created-at timestamps use `DATASET_REFERENCE_TIME`.
+    """
     connection = get_connection()
 
     try:
@@ -52,6 +58,12 @@ def seed_staff():
         connection.close()
 
 def create_staff_table():
+    """
+    Drop and recreate the `staff` table.
+
+    Any existing staff rows are removed. Call `seed_staff` afterward
+    to reload the initial roster.
+    """
     connection = get_connection()
     try:
         connection.execute("DROP TABLE IF EXISTS staff")
