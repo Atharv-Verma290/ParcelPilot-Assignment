@@ -1,40 +1,75 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from .states import ActionProposalState, ActionProposal
-from .prompts import ACTION_PROPOSAL_SYSTEM_PROMPT
+from .prompts import ACTION_PROPOSAL_SYSTEM_PROMPT, STRUCTURE_PROPOSAL_SYSTEM_PROMPT
+from .tools import proposal_tools
 
 llm = ChatOpenAI(model="gpt-5.6-luna", reasoning_effort="none")
-proposal_llm = llm.with_structured_output(ActionProposal)
 
-def create_proposal(state: ActionProposalState) -> dict:
+proposal_llm = llm.bind_tools(proposal_tools)
+structured_llm = llm.with_structured_output(ActionProposal)
+
+
+def create_proposal(state: ActionProposalState):
     """
-    Convert the requested action into a normalized action proposal.
+    Determine which action proposal should be created and call the
+    appropriate proposal tool.
 
-    This node MUST NOT modify application state or the database.
+    This node only creates a proposal. It never executes the action
+    or modifies the database.
     """
+    try:
+        message_history = state.get("messages", [])
+        instruction = state.get("instruction", "")
 
-    instruction = state["instruction"]
+        messages = [
+            SystemMessage(content=ACTION_PROPOSAL_SYSTEM_PROMPT),
+            HumanMessage(content=instruction),
+        ] + message_history
 
-    # For now, this can be implemented using an LLM
-    # or deterministic logic depending on the action.
+        response = proposal_llm.invoke(messages)
 
-    return {
-        "proposal": {
-            "instruction": instruction
+        return {
+            "messages": [response],
+            "error": None,
         }
-    }
+
+    except Exception as error:
+        return {
+            "error": f"Failed to create action proposal: {error}",
+        }
 
 
-def build_action_proposal(state: ActionProposalState):
+def structure_proposal(state: ActionProposalState):
+    """
+    Convert the proposal tool result into a validated ActionProposal.
 
-    messages = [
-        SystemMessage(content=ACTION_PROPOSAL_SYSTEM_PROMPT),
-        HumanMessage(content=state["instruction"]),
-    ]
+    This node does not execute the proposed action.
+    """
+    try:
+        messages = state.get("messages", [])
 
-    result = proposal_llm.invoke(messages)
+        if not messages:
+            return {
+                "error": "No proposal tool result was produced."
+            }
 
-    return {
-        "action": result.action,
-        "proposal": result.proposal,
-    }
+        last_message = messages[-1].content
+
+        structure_messages = [
+            SystemMessage(content=STRUCTURE_PROPOSAL_SYSTEM_PROMPT),
+            HumanMessage(content=last_message),
+        ]
+
+        result = structured_llm.invoke(structure_messages)
+
+        return {
+            "action": result.action,
+            "proposal": result.proposal,
+            "error": None,
+        }
+
+    except Exception as error:
+        return {
+            "error": f"Failed to structure action proposal: {error}",
+        }
