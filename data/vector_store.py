@@ -27,6 +27,20 @@ collection = client.get_or_create_collection(
     embedding_function=embedding_function
 )
 
+
+def reset_collection() -> None:
+    global collection
+
+    try:
+        client.delete_collection(name="parcel_pilot_docs")
+    except Exception:
+        pass
+
+    collection = client.get_or_create_collection(
+        name="parcel_pilot_docs",
+        embedding_function=embedding_function,
+    )
+
 def add_chunks(chunks):
     documents = []
     metadatas = []

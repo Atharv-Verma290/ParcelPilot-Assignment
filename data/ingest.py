@@ -1,27 +1,45 @@
 from pathlib import Path
-from pdf_parser import extract_pages_from_pdf, split_into_sections
-from vector_store import add_chunks
 
-docs_dir = Path("data/docs")
+from data.pdf_parser import extract_pages_from_pdf, split_into_sections
+from data.vector_store import add_chunks, reset_collection
 
-for pdf_path in docs_dir.glob("*.pdf"):
-    print("\n")
-    print("=" * 80)
-    print(pdf_path.name)
-    print("=" * 80)
 
-    pages = extract_pages_from_pdf(str(pdf_path))
+DOCS_DIR = Path("data/docs")
 
-    sections = split_into_sections(
-        pages,
-        {
-            "source": pdf_path.name,
-        }
-    )
 
-    add_chunks(sections)
+def ingest_documents(docs_dir: Path = DOCS_DIR) -> None:
+    reset_collection()
 
-    for section in sections:
-        print(section["metadata"])
-        print(section["text"][:300])
-        print()
+    pdf_paths = sorted(docs_dir.glob("*.pdf"))
+
+    if not pdf_paths:
+        print(f"No PDF files found in {docs_dir}")
+        return
+
+    for pdf_path in pdf_paths:
+        print("\n")
+        print("=" * 80)
+        print(pdf_path.name)
+        print("=" * 80)
+
+        pages = extract_pages_from_pdf(str(pdf_path))
+
+        sections = split_into_sections(
+            pages,
+            {
+                "source": pdf_path.name,
+            },
+        )
+
+        add_chunks(sections)
+
+        for section in sections:
+            print(section["metadata"])
+            print(section["text"][:300])
+            print()
+
+    print(f"\nIngested {len(pdf_paths)} PDF(s) into ChromaDB.")
+
+
+if __name__ == "__main__":
+    ingest_documents()
