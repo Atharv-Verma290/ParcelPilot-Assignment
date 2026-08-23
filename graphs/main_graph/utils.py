@@ -82,6 +82,80 @@ def create_task_in_database(
         connection.close()
 
 
+def update_task_in_database(
+    task_id: int,
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    priority: Optional[str] = None,
+    assigned_team: Optional[str] = None,
+    status: Optional[str] = None,
+    ticket_id: Optional[str] = None,
+    order_id: Optional[str] = None,
+) -> None:
+    fields = []
+    values = []
+
+    updates = {
+        "title": title,
+        "description": description,
+        "priority": priority,
+        "assigned_team": assigned_team,
+        "status": status,
+        "ticket_id": ticket_id,
+        "order_id": order_id,
+    }
+
+    for column, value in updates.items():
+        if value is not None:
+            fields.append(f"{column} = ?")
+            values.append(value)
+
+    if not fields:
+        raise ValueError("At least one field must be provided for update.")
+
+    values.append(task_id)
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            f"""
+            UPDATE follow_up_tasks
+            SET {", ".join(fields)}
+            WHERE task_id = ?
+            """,
+            tuple(values),
+        )
+
+        if cursor.rowcount == 0:
+            raise ValueError(f"No follow-up task found with task_id {task_id}.")
+
+        connection.commit()
+
+    finally:
+        connection.close()
+
+
+def delete_task_in_database(task_id: int) -> None:
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            """
+            DELETE FROM follow_up_tasks
+            WHERE task_id = ?
+            """,
+            (task_id,),
+        )
+
+        if cursor.rowcount == 0:
+            raise ValueError(f"No follow-up task found with task_id {task_id}.")
+
+        connection.commit()
+
+    finally:
+        connection.close()
+
+
 def _next_staff_user_id(connection) -> str:
     row = connection.execute(
         """

@@ -119,17 +119,102 @@ def create_follow_up_task(
     role = runtime.state.get("role")
 
     try:
-        require_permission(role, Permission.CREATE_FOLLOW_UP_TASK)
+        require_permission(role, Permission.MANAGE_FOLLOW_UP_TASKS)
     except PermissionError as error:
         return f"Access denied: {error}"
 
     return json.dumps({
-        "title": title,
-        "description": description,
-        "priority": priority,
-        "assigned_team": assigned_team,
-        "ticket_id": ticket_id,
-        "order_id": order_id,
+        "action": "create_follow_up_task",
+        "proposal": {
+            "title": title,
+            "description": description,
+            "priority": priority,
+            "assigned_team": assigned_team,
+            "ticket_id": ticket_id,
+            "order_id": order_id,
+        },
+    })
+
+
+@tool
+def update_follow_up_task(
+    task_id: int,
+    runtime: ToolRuntime,
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    priority: Optional[Literal["LOW", "MEDIUM", "HIGH", "URGENT"]] = None,
+    assigned_team: Optional[str] = None,
+    status: Optional[Literal["OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED"]] = None,
+    ticket_id: Optional[str] = None,
+    order_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Propose an update to an existing follow-up task.
+
+    This does NOT modify the database.
+    The proposal must be explicitly approved by a human
+    before execution.
+    """
+    role = runtime.state.get("role")
+
+    try:
+        require_permission(role, Permission.MANAGE_FOLLOW_UP_TASKS)
+    except PermissionError as error:
+        return f"Access denied: {error}"
+
+    if all(
+        value is None
+        for value in (
+            title,
+            description,
+            priority,
+            assigned_team,
+            status,
+            ticket_id,
+            order_id,
+        )
+    ):
+        return "At least one field must be provided for update."
+
+    return json.dumps({
+        "action": "update_follow_up_task",
+        "proposal": {
+            "task_id": task_id,
+            "title": title,
+            "description": description,
+            "priority": priority,
+            "assigned_team": assigned_team,
+            "status": status,
+            "ticket_id": ticket_id,
+            "order_id": order_id,
+        },
+    })
+
+
+@tool
+def delete_follow_up_task(
+    task_id: int,
+    runtime: ToolRuntime,
+) -> Dict[str, Any]:
+    """
+    Propose deletion of an existing follow-up task.
+
+    This does NOT modify the database.
+    The proposal must be explicitly approved by a human
+    before execution.
+    """
+    role = runtime.state.get("role")
+
+    try:
+        require_permission(role, Permission.MANAGE_FOLLOW_UP_TASKS)
+    except PermissionError as error:
+        return f"Access denied: {error}"
+
+    return json.dumps({
+        "action": "delete_follow_up_task",
+        "proposal": {
+            "task_id": task_id,
+        },
     })
 
 
@@ -226,4 +311,13 @@ def delete_staff(
         },
     })
 
-all_tools = [search_docs_tool, query_structured_data, create_follow_up_task, create_staff, update_staff, delete_staff]
+all_tools = [
+    search_docs_tool,
+    query_structured_data,
+    create_follow_up_task,
+    update_follow_up_task,
+    delete_follow_up_task,
+    create_staff,
+    update_staff,
+    delete_staff,
+]

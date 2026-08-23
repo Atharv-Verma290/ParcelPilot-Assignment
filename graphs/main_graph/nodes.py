@@ -14,7 +14,9 @@ from .utils import (
     create_staff_in_database,
     create_task_in_database,
     delete_staff_in_database,
+    delete_task_in_database,
     update_staff_in_database,
+    update_task_in_database,
 )
 
 load_dotenv()
@@ -29,6 +31,8 @@ APPROVAL_WORDS = {"yes", "approve", "approved", "confirm"}
 
 SUPPORTED_ACTIONS = {
     "create_follow_up_task",
+    "update_follow_up_task",
+    "delete_follow_up_task",
     "create_staff",
     "update_staff",
     "delete_staff",
@@ -135,6 +139,59 @@ def perform_action(state: AgentState):
             "messages": [
                 AIMessage(
                     content=f"Follow-up task created: {task_id}"
+                )
+            ],
+        }
+
+    # -----------------------------------------------------
+    # Update follow-up task
+    # -----------------------------------------------------
+
+    if action_type == "update_follow_up_task":
+
+        update_task_in_database(
+            task_id=proposal["task_id"],
+            title=proposal.get("title"),
+            description=proposal.get("description"),
+            priority=proposal.get("priority"),
+            assigned_team=proposal.get("assigned_team"),
+            status=proposal.get("status"),
+            ticket_id=proposal.get("ticket_id"),
+            order_id=proposal.get("order_id"),
+        )
+
+        return {
+            "pending_action": None,
+            "messages": [
+                AIMessage(
+                    content=(
+                        f"Follow-up task "
+                        f"{proposal['task_id']} "
+                        f"updated successfully."
+                    )
+                )
+            ],
+        }
+
+    # -----------------------------------------------------
+    # Delete follow-up task
+    # -----------------------------------------------------
+
+    if action_type == "delete_follow_up_task":
+
+        delete_task_in_database(
+            task_id=proposal["task_id"],
+        )
+
+        return {
+            "pending_action": None,
+            "messages": [
+                AIMessage(
+                    content=(
+                        f"Follow-up task "
+                        f"{proposal['task_id']} "
+                        f"deleted successfully."
+                    )
                 )
             ],
         }

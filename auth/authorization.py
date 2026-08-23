@@ -3,7 +3,7 @@ from enum import StrEnum
 class Permission(StrEnum):
     READ_DOCUMENTS = "read_documents"
     READ_OPERATIONAL_DATA = "read_operational_data"
-    CREATE_FOLLOW_UP_TASK = "create_follow_up_task"
+    MANAGE_FOLLOW_UP_TASKS = "manage_follow_up_tasks"
 
     MANAGE_STAFF = "manage_staff"
     MANAGE_ACCESS = "manage_access"
@@ -21,19 +21,19 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
     Role.SUPPORT: {
         Permission.READ_DOCUMENTS,
         Permission.READ_OPERATIONAL_DATA,
-        # Permission.CREATE_FOLLOW_UP_TASK,
+        # Permission.MANAGE_FOLLOW_UP_TASKS,
     },
 
     Role.OPERATIONS: {
         Permission.READ_DOCUMENTS,
         Permission.READ_OPERATIONAL_DATA,
-        Permission.CREATE_FOLLOW_UP_TASK,
+        Permission.MANAGE_FOLLOW_UP_TASKS,
     },
 
     Role.ADMIN: {
         Permission.READ_DOCUMENTS,
         Permission.READ_OPERATIONAL_DATA,
-        Permission.CREATE_FOLLOW_UP_TASK,
+        Permission.MANAGE_FOLLOW_UP_TASKS,
         Permission.MANAGE_STAFF,
         Permission.READ_STAFF,
         Permission.MANAGE_ACCESS,
