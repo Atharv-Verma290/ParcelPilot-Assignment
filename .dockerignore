@@ -1,0 +1,16 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+.env
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.ipynb_checkpoints
+research.ipynb
+*.md
+uv.lock
+data/chroma/
+data/parcel_pilot.db 
