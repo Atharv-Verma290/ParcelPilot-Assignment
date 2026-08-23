@@ -187,7 +187,17 @@ flowchart TD
     E --> M
 ```
 
+**Main graph**
 
+![Main graph](screenshots/main_graph.png)
+
+**Structured data subgraph**
+
+![Structured data subgraph](screenshots/structured_data_subgraph.png)
+
+**Action proposal subgraph**
+
+![Action proposal graph](screenshots/action_proposal_subgraph.png)
 
 ---
 
