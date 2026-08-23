@@ -12,7 +12,7 @@ def create_ticket(
     description: str,
     channel: Literal["email", "chat"],
     runtime: ToolRuntime,
-    status: Literal["OPEN", "CLOSED"] = "OPEN",
+    status: Literal["open", "closed"] = "open",
     assigned_to: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
@@ -50,7 +50,7 @@ def update_ticket(
     runtime: ToolRuntime,
     subject: Optional[str] = None,
     description: Optional[str] = None,
-    status: Optional[Literal["OPEN", "CLOSED"]] = None,
+    status: Optional[Literal["open", "closed"]] = None,
     assigned_to: Optional[str] = None,
 ) -> Dict[str, Any]:
     """

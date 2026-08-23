@@ -18,7 +18,7 @@ builder.add_node("structure_proposal", structure_proposal)
 builder.set_entry_point("create_proposal")
 
 builder.add_conditional_edges("create_proposal", tools_condition, {"tools": "tools", "__end__": "structure_proposal"})
-builder.add_edge("tools", "create_proposal")
+builder.add_edge("tools", "structure_proposal")
 builder.add_edge("structure_proposal", END)
 
 action_proposal_graph = builder.compile()

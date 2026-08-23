@@ -35,6 +35,13 @@ llm = model.bind_tools(all_tools)
 
 APPROVAL_WORDS = {"yes", "approve", "approved", "confirm"}
 
+
+def execution_result_message(content: str) -> AIMessage:
+    return AIMessage(
+        content=content,
+        name="perform_action",
+    )
+
 SUPPORTED_ACTIONS = {
     "create_follow_up_task",
     "update_follow_up_task",
@@ -149,7 +156,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=f"Follow-up task created: {task_id}"
                 )
             ],
@@ -175,7 +182,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=(
                         f"Follow-up task "
                         f"{proposal['task_id']} "
@@ -198,7 +205,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=(
                         f"Follow-up task "
                         f"{proposal['task_id']} "
@@ -226,7 +233,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=(
                         f"Ticket created successfully. "
                         f"Ticket ID: {ticket_id}"
@@ -252,7 +259,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=(
                         f"Ticket "
                         f"{proposal['ticket_id']} "
@@ -275,7 +282,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=(
                         f"Ticket "
                         f"{proposal['ticket_id']} "
@@ -309,7 +316,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=(
                         f"Order created successfully. "
                         f"Order ID: {order_id}"
@@ -355,7 +362,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=(
                         f"Order "
                         f"{proposal['order_id']} "
@@ -378,7 +385,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=(
                         f"Order "
                         f"{proposal['order_id']} "
@@ -402,7 +409,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=(
                         f"Staff member created successfully. "
                         f"User ID: {user_id}"
@@ -426,7 +433,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=(
                         f"Staff member "
                         f"{proposal['user_id']} "
@@ -447,7 +454,7 @@ def perform_action(state: AgentState):
             return {
                 "pending_action": None,
                 "messages": [
-                    AIMessage(
+                    execution_result_message(
                         content=(
                             "Operation denied: you cannot "
                             "delete your own staff account."
@@ -463,7 +470,7 @@ def perform_action(state: AgentState):
         return {
             "pending_action": None,
             "messages": [
-                AIMessage(
+                execution_result_message(
                     content=(
                         f"Staff member "
                         f"{proposal['user_id']} "
@@ -480,7 +487,7 @@ def perform_action(state: AgentState):
     return {
         "pending_action": None,
         "messages": [
-            AIMessage(
+            execution_result_message(
                 content=f"Unsupported action: {action_type}"
             )
         ],

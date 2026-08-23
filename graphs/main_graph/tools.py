@@ -139,7 +139,7 @@ def propose_action(instruction: str, runtime: ToolRuntime) -> str:
 
     return json.dumps({
         "action": action,
-        "proposal": proposal,
+        "proposal": proposal.model_dump(),
     })
 
 all_tools = [
